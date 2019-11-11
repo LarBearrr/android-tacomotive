@@ -1,4 +1,4 @@
-package edu.bu.metcs.activitylifecycle;
+package edu.bu.metcs.tacomotive;
 
 import org.junit.Test;
 
