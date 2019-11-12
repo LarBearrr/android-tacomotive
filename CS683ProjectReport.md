@@ -147,7 +147,7 @@ location information is based on social media streams.
 
 |Iteration | Application Requirements (E/D/O) | Android Components and Features| 
 |---|---|---|
-|1| 1. Signup (E), 2. Login (E) | Firestore, Activities, Database |
+|1| 1. Signup (E), 2. Login (E) | ~~Firestore~~, *Firebase Authentication*, Activities, ~~Database~~ |
 |2| 3. View map of food trucks (E), 4. Search for food trucks (E) | Firestore, Activities, Services, Google Maps API, GPS |
 |3| 5. Add food truck (E), 6. Update food truck location | Firestore, Activities, Database, GPS |
 |4| 7. View food truck details (E), 1. View list of food trucks (D) | Database, Firestore, Activities |
@@ -157,14 +157,114 @@ location information is based on social media streams.
 
 *(In Iteration 1-5, for each requirement you have worked on in this iteration, please give a detailed description, completion status (completed, or partially completed) and show the testing results if completed or partially completed, such as screenshots of the application screens or log info.) Please also specify if this requirement is a new requirement or a requirement you had started in previous iterations. Please also specify what device do you use for testing )*
 
+### Iteration 1
+Both the sign up and login requirements were completed in Iteration 1. The app checks for an authenticated user when the main activity starts, and displays a login/sign in form if no user is signed in; otherwise, the main activity displays the signed in user’s name. Firebase Authentication SDK and UI were used to implement both of these requirements and eliminated the need for coding custom activity layouts for these screens. In fact, the sign in activity acts like a sign up activity if the email used to sign in does not exist in Firebase’s Authentication User Store. 
+User account creation
+For this requirement, if the user enters an email that does not exist in the system, they are taken to a sign up screen. After entering their name, and providing a password, tapping the save button will create their account and automatically sign them in to the application. The main activity is updated with their name, and includes a button to sign out.
+
+![](.CS683ProjectReport_images/ea05af51.png)
+![](.CS683ProjectReport_images/1803460a.png)
+![](.CS683ProjectReport_images/671a14a6.png)
+![](.CS683ProjectReport_images/a4715e35.png)
+
+User login
+For this requirement, the user can provide a previously used email address to sign in to the application. After entering their email address, tapping the next button will show a screen indicating  they have used this email to sign in to the application before and asks them to enter their password. After successfully signing in to the application, the main activity is updated with their name.
+
+![](.CS683ProjectReport_images/545fee37.png)
+![](.CS683ProjectReport_images/d81a7abd.png)
+![](.CS683ProjectReport_images/feb8487f.png)
+
+Although it was not explicitly included in the original proposal, it occurred to me that users would need to sign out of the application. I added a basic sign out button that uses a callback and event handler to sign the user out of the application. The sign out method updates the UI accordingly, displaying the sign in screen again.
+
+![](.CS683ProjectReport_images/825b7248.png)
+
+Furthermore, the Firebase UI and Authentication SDK handle validation and error handling for free. Typically, this would require some additional logic and implementation time, so this is a big win and time saver. For example, if the user enters an invalid email address format, the Firebase UI will display a validation error to the user:
+
+![](.CS683ProjectReport_images/7b796e1d.png)
+
+The same applies for invalid passwords:
+
+![](.CS683ProjectReport_images/2276b9ae.png)
+
 
 ## Design and Implementation
 
 *(In Iteration 1-5, please describe Android components and features you have used in this iteration to implement the above requirements in your application. For each feature you used, provide a brief description and supporting evidences, such as sample code, log info, or screenshot(s) of execution results. Please specify mapped requirements and files in your project.)*
 
-## Project Structure
-*(In Iteration 1-5, please provide a screenshot of your project structure, and describe what files are modified, added or deleted since the previous iteration.)*
+### Iteration 1
+Firebase was implemented following the SDK guides on Google. This included updated both the project and app-level gradle files, as well as including the google services JSON file in the project’s app directory. Most of this setup was completed simply by following the guides for Google Firebase. Also, because the project repo boilerplate included the google services plugins, I only needed to add the Firebase dependencies to my project’s gradle file:
 
+
+```
+dependencies { 
+…
+    // add the Firebase SDK for Google Analytics
+    implementation 'com.google.firebase:firebase-analytics:17.2.0'
+    // add SDKs for any other desired Firebase products
+    implementation 'com.google.firebase:firebase-auth:19.1.0'
+    implementation 'com.firebaseui:firebase-ui-auth:4.3.1'
+}
+```
+
+I added some additional properties to my main activity to maintain state
+of the Firebase auth and user: 
+```
+private FirebaseAuth mAuth;
+private FirebaseUser currentUser;
+private static final int RC_SIGN_IN = 123;
+```
+
+I also updated the onCreate() and onStart() methods of the main activity to check for a signed in user, and update the UI accordingly using the methods described in the Firebase documentation:
+
+```
+@Override protected void onCreate(Bundle savedInstanceState) { 
+… 
+// Initialize Firebase Auth 
+mAuth = FirebaseAuth.getInstance(); 
+}
+```
+```
+@Override protected void onStart() { 
+… 
+// Check if user is signed in (non-null) and update UI accordingly. 
+currentUser = mAuth.getCurrentUser(); updateUI(currentUser); }
+```
+
+```
+private void updateUI(@Nullable FirebaseUser user) {
+    if (user != null) {
+
+        usernameTextView = findViewById(R.id.usernameTextViewId);
+        usernameTextView.setText(user.getDisplayName());
+
+    } else {
+
+        List<AuthUI.IdpConfig> providers = Arrays.asList(
+                new AuthUI.IdpConfig.EmailBuilder().build()
+        );
+
+        // Create and launch sign-in intent
+        startActivityForResult(
+                AuthUI.getInstance()
+                        .createSignInIntentBuilder()
+                        .setAvailableProviders(providers)
+                        .build(),
+                RC_SIGN_IN
+        );
+
+    }
+}
+```
+
+## Project Structure
+*(In Iteration 1-5, please provide a screenshot of your project
+structure, and describe what files are modified, added or deleted since
+the previous iteration.)*
+
+### Iteration 1
+
+![](.CS683ProjectReport_images/5456a7e8.png)
+![](.CS683ProjectReport_images/74656c88.png)
 ## References
 
 *(Please list all your references here)*
@@ -178,6 +278,8 @@ Barker, L. (2019). Tacomotive. From Tacomotive: https://tacomotive.herokuapp.com
 Barker, L. (2019). Tacomotive Database Project. 
 
 Definition of 'Acceptance Testing'. (n.d.). Retrieved 11 1, 2019 from The Economic Times: https://economictimes.indiatimes.com/definition/acceptance-testing
+
+Easily add sign-in to your Android app with FirebaseUI. (n.d.). Retrieved 11, 2019 from Google Firebase: https://firebase.google.com/docs/auth/android/firebaseui
 
 What is User Acceptance Testing (UAT): A Complete Guide. (2019, August 21). Retrieved November 1, 2019 from Software Testing Help: https://www.softwaretestinghelp.com/what-is-user-acceptance-testing-uat/
 
