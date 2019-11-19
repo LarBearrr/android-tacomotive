@@ -1,12 +1,17 @@
 package edu.bu.metcs.tacomotive;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.firebase.ui.auth.AuthUI;
@@ -230,7 +235,6 @@ public class MainActivity extends AppCompatActivity {
         // [END delete_user]
     }
 
-
     public void getEmailCredentials() {
         String email = "";
         String password = "";
@@ -253,8 +257,9 @@ public class MainActivity extends AppCompatActivity {
     private void updateUI(@Nullable FirebaseUser user) {
         if (user != null) {
 
-            usernameTextView = findViewById(R.id.usernameTextViewId);
-            usernameTextView.setText(user.getDisplayName());
+            Intent intent = new Intent(this, MapsActivity.class);
+            startActivity(intent);
+
 
         } else {
 

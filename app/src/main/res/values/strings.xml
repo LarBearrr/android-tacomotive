@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Tacomotive</string>
     <string name="title_activity_firebase_ui">FirebaseUIActivity</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="button_sign_out">Sign out</string>
 </resources>
