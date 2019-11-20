@@ -186,6 +186,18 @@ The same applies for invalid passwords:
 
 ![](.CS683ProjectReport_images/2276b9ae.png)
 
+### Iteration 2
+The requirement to view a map of food trucks was implemented in this iteration. The requirement to search for trucks was not completed; however, the app will search for trucks based on a predefined
+set of coordinates (currently those for Wichita, Kans: 37.6922, -97.3376). After the user authenticates, the app starts a map activity which implements Google's Map SDK. The activity then uses a 
+callback to make a HTTP request to Yelp's API when the map is ready to load. The response is then converted to an array and looped over, creating a map marker using the coordinates and the business name
+for a popup when the marker is clicked.
+
+View map of food trucks
+For this requirement, the app uses a HTTP request class and makes a GET request to Yelp's API in order to obtain business information for food trucks in the specified area.
+
+![image](https://user-images.githubusercontent.com/28734844/69204043-7c872980-0b0b-11ea-87af-2385a7847812.png)
+
+
 
 ## Design and Implementation
 
@@ -256,6 +268,98 @@ private void updateUI(@Nullable FirebaseUser user) {
 }
 ```
 
+### Iteration 2
+I implemented Google Maps SDK following the instructions on Google's website: [Maps SDK for Android](https://developers.google.com/maps/documentation/android-sdk/intro).
+In order to support the SDK, I added the google play services package to my app module's grade file:
+
+
+```
+dependencies { 
+…
+    implementation 'com.google.android.gms:play-services-maps:17.0.0'
+}
+```
+
+In order to make HTTP requests to Yelp's API, I used another library to help make async requests, which also required updating my 
+gradle file:
+
+```
+    // android async http
+    // source: https://loopj.com/android-async-http/
+    implementation 'com.loopj.android:android-async-http:1.4.9'
+
+```
+
+Following the instructions for the http package, I created a utility class `HttpUtils` which provides 
+the basic methods for making HTTP request:
+
+```
+import com.loopj.android.http.*;
+
+public class HttpUtils {
+    private static final String BASE_URL = "https://api.yelp.com/v3/";
+
+    private static AsyncHttpClient client = new AsyncHttpClient();
+
+    public static void get(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
+        client.get(getAbsoluteUrl(url), params, responseHandler);
+    }
+
+    private static String getAbsoluteUrl(String relativeUrl) {
+        return BASE_URL + relativeUrl;
+    }
+}
+```
+
+I then used this class in my map activity to make a GET request when the map was ready to load. 
+The method takes the response and creates a JSON object, which an array of food trucks can be looped over
+to obtain their coordinates, and then add markers to the map using these coordinates.:
+
+```
+    HttpUtils.get("businesses/search?term=tacos&latitude=37.6922&longitude=-97.3376", null, new JsonHttpResponseHandler() {
+        @Override
+        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+
+            // If the response is JSONObject instead of expected JSONArray
+            Log.d("trucks", "---------------- this is response : " + response);
+            try {
+                String truckResponse = response.toString();
+
+                // Adapted from: https://stackoverflow.com/questions/22687771/how-to-convert-jsonobjects-to-jsonarray
+                JSONObject truckObject = new JSONObject(truckResponse);
+                JSONArray truckArray = truckObject.getJSONArray("businesses");
+
+                for(int i=0; i<truckArray.length(); i++) {
+                    JSONObject truck = truckArray.getJSONObject(i);
+
+                    JSONObject coordinates = truck.getJSONObject("coordinates");
+
+                    String truckName = truck.getString("name");
+
+                    Double lat = coordinates.getDouble("latitude");
+                    Double lng = coordinates.getDouble("longitude");
+
+                    Log.d("truck", "latitude: " + lat + ", longitude: " + lng);
+
+                    // Add a marker in Sydney and move the camera
+                    LatLng marker = new LatLng(lat, lng);
+                    mMap.addMarker(new MarkerOptions().position(marker).title(truckName));
+                }
+            } catch (JSONException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onSuccess(int statusCode, Header[] headers, JSONArray trucks) {
+            // Pull out the first event on the public timeline
+            Log.d("trucks", "Successfull request made...");
+        }
+    });
+```
+
+
 ## Project Structure
 *(In Iteration 1-5, please provide a screenshot of your project
 structure, and describe what files are modified, added or deleted since
@@ -265,6 +369,16 @@ the previous iteration.)*
 
 ![](.CS683ProjectReport_images/5456a7e8.png)
 ![](.CS683ProjectReport_images/74656c88.png)
+
+### Iteration 2
+
+Since iteration 1, the MainActivity class was updated to start the maps activity using an intent. The MapsActivity and HttpUtil classes were added.
+A layout file for the new map activity was added, and the main activity was updated. A new resource file was added to include the Google Maps API key.
+Both grade files were updated to include new packages.
+
+![image](https://user-images.githubusercontent.com/28734844/69204499-a1c86780-0b0c-11ea-85cf-3e325de8f30b.png)
+
+
 ## References
 
 *(Please list all your references here)*
@@ -275,11 +389,19 @@ the previous iteration.)*
 
 Barker, L. (2019). Tacomotive. From Tacomotive: https://tacomotive.herokuapp.com
 
-Barker, L. (2019). Tacomotive Database Project. 
+Barker, L. (2019). Tacomotive Database Project.
+
+Calling REST APIs for Android: https://stackoverflow.com/questions/29339565/calling-rest-api-from-an-android-app
 
 Definition of 'Acceptance Testing'. (n.d.). Retrieved 11 1, 2019 from The Economic Times: https://economictimes.indiatimes.com/definition/acceptance-testing
 
 Easily add sign-in to your Android app with FirebaseUI. (n.d.). Retrieved 11, 2019 from Google Firebase: https://firebase.google.com/docs/auth/android/firebaseui
 
+How to convert JSONObjects to JSONArray?: https://stackoverflow.com/questions/22687771/how-to-convert-jsonobjects-to-jsonarray
+
+Maps SDK for Android: https://developers.google.com/maps/documentation/android-sdk/start
+
 What is User Acceptance Testing (UAT): A Complete Guide. (2019, August 21). Retrieved November 1, 2019 from Software Testing Help: https://www.softwaretestinghelp.com/what-is-user-acceptance-testing-uat/
+
+
 
