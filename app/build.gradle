@@ -34,6 +34,10 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth:19.1.0'
     implementation 'com.firebaseui:firebase-ui-auth:4.3.1'
     implementation 'com.google.android.gms:play-services-maps:17.0.0'
+
+    // android async http
+    // source: https://loopj.com/android-async-http/
+    implementation 'com.loopj.android:android-async-http:1.4.9'
 }
 
 apply plugin: 'com.google.gms.google-services'
