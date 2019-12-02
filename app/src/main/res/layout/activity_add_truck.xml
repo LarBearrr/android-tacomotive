@@ -5,9 +5,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MapsActivity">
+    tools:context=".AddTruckActivity">
 
-    <fragment android:id="@+id/autocomplete_fragment"
+
+    <EditText
+        android:id="@+id/truckNameEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:hint="Truck Name" />
+
+    <EditText
+        android:id="@+id/phoneEditTextId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="phone"
+        android:hint="Phone" />
+
+    <fragment android:id="@+id/truckAddressAutocompleteFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment" />
@@ -16,14 +33,6 @@
         android:id="@+id/addTruckButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="onClickAddTruck"
+        android:onClick="onAddTruck"
         android:text="ADD TRUCK" />
-
-    <fragment
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="match_parent"
-        android:layout_height="663dp"
-        tools:context=".MapsActivity" />
-
 </LinearLayout>

@@ -1,5 +1,6 @@
 package edu.bu.metcs.tacomotive;
 
+import android.app.Application;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -257,9 +258,11 @@ public class MainActivity extends AppCompatActivity {
     private void updateUI(@Nullable FirebaseUser user) {
         if (user != null) {
 
+            TacomotiveApplication app = (TacomotiveApplication) getApplication();
+            app.setUser(user);
+
             Intent intent = new Intent(this, MapsActivity.class);
             startActivity(intent);
-
 
         } else {
 

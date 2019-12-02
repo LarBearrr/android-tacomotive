@@ -2,8 +2,10 @@ package edu.bu.metcs.tacomotive;
 
 import androidx.fragment.app.FragmentActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Status;
@@ -161,5 +163,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Log.d("trucks", "Successfull request made...");
             }
         });
+    }
+
+    public void onClickAddTruck(View view) {
+        Intent intent = new Intent(this, AddTruckActivity.class);
+        startActivity(intent);
     }
 }
