@@ -1,4 +1,4 @@
-package edu.bu.metcs.tacomotive;
+package edu.bu.metcs.tacomotive.app;
 
 import android.app.Application;
 import android.content.res.Configuration;

@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -20,16 +19,15 @@ import org.json.*;
 
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
-import com.google.android.libraries.places.api.net.FetchPlaceRequest;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.loopj.android.http.*;
 
 import java.util.Arrays;
-import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
+import edu.bu.metcs.tacomotive.classes.HttpUtils;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 

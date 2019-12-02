@@ -2,13 +2,11 @@ package edu.bu.metcs.tacomotive;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
-import com.firebase.ui.auth.data.model.User;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.libraries.places.api.Places;
@@ -22,6 +20,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Arrays;
 
+import edu.bu.metcs.tacomotive.app.TacomotiveApplication;
 import edu.bu.metcs.tacomotive.models.Truck;
 
 public class AddTruckActivity extends AppCompatActivity {

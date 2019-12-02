@@ -1,4 +1,4 @@
-package edu.bu.metcs.tacomotive;
+package edu.bu.metcs.tacomotive.classes;
 
 import com.loopj.android.http.*;
 
