@@ -5,6 +5,9 @@ import android.content.res.Configuration;
 
 import com.google.firebase.auth.FirebaseUser;
 
+/*
+ * Source: https://github.com/codepath/android_guides/wiki/Understanding-the-Android-Application-Class
+ */
 public class TacomotiveApplication extends Application {
     FirebaseUser user;
 

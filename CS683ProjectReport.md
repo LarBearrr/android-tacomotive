@@ -139,7 +139,7 @@ location information is based on social media streams.
 •	Services (notifications)
 •	GPS – tracking locations
 •	Google APIs – maps and geolocating
-•	Firebase – authentication and firestore
+•	Firebase – authentication and firestore/database
 
 ## Timeline
 
@@ -149,54 +149,25 @@ location information is based on social media streams.
 |---|---|---|
 |1| 1. Signup (E), 2. Login (E) | ~~Firestore~~, *Firebase Authentication*, Activities, ~~Database~~ |
 |2| 3. View map of food trucks (E), 4. Search for food trucks (E) | Firestore, Activities, Services, Google Maps API, GPS |
-|3| 5. Add food truck (E), 6. Update food truck location | Firestore, Activities, Database, GPS |
-|4| 7. View food truck details (E), 1. View list of food trucks (D) | Database, Firestore, Activities |
+|3| 5. Add food truck (E), 7. View food truck details (E) | ~~Firestore~~, Activities, Firebase Realtime Database, Google Places API |
+|4| 6. Update food truck location, 1. View list of food trucks (D) | Database, Firestore, Activities |
 |5| 2. Add food truck to favorites (D) | Settings, Database, Firestore, Activities |
 
 ## Requirement Analysis and Testing 
 
 *(In Iteration 1-5, for each requirement you have worked on in this iteration, please give a detailed description, completion status (completed, or partially completed) and show the testing results if completed or partially completed, such as screenshots of the application screens or log info.) Please also specify if this requirement is a new requirement or a requirement you had started in previous iterations. Please also specify what device do you use for testing )*
 
-### Iteration 1
-Both the sign up and login requirements were completed in Iteration 1. The app checks for an authenticated user when the main activity starts, and displays a login/sign in form if no user is signed in; otherwise, the main activity displays the signed in user’s name. Firebase Authentication SDK and UI were used to implement both of these requirements and eliminated the need for coding custom activity layouts for these screens. In fact, the sign in activity acts like a sign up activity if the email used to sign in does not exist in Firebase’s Authentication User Store. 
-User account creation
-For this requirement, if the user enters an email that does not exist in the system, they are taken to a sign up screen. After entering their name, and providing a password, tapping the save button will create their account and automatically sign them in to the application. The main activity is updated with their name, and includes a button to sign out.
 
-![](.CS683ProjectReport_images/ea05af51.png)
-![](.CS683ProjectReport_images/1803460a.png)
-![](.CS683ProjectReport_images/671a14a6.png)
-![](.CS683ProjectReport_images/a4715e35.png)
+This iteration was spent catching up on missing requirements. Specifically, support for adding food trucks was implemented using a new activity. A class was created to represent a truck in the firebase realtime database.
+Additional details were added to the map to show the food trucks address when a marker is tapped.
 
-User login
-For this requirement, the user can provide a previously used email address to sign in to the application. After entering their email address, tapping the next button will show a screen indicating  they have used this email to sign in to the application before and asks them to enter their password. After successfully signing in to the application, the main activity is updated with their name.
+Users can add trucks to the map by clicking the add truck button on the map activity. They can then enter a name, phone number, and location for the truck and save it to the database.
 
-![](.CS683ProjectReport_images/545fee37.png)
-![](.CS683ProjectReport_images/d81a7abd.png)
-![](.CS683ProjectReport_images/feb8487f.png)
-
-Although it was not explicitly included in the original proposal, it occurred to me that users would need to sign out of the application. I added a basic sign out button that uses a callback and event handler to sign the user out of the application. The sign out method updates the UI accordingly, displaying the sign in screen again.
-
-![](.CS683ProjectReport_images/825b7248.png)
-
-Furthermore, the Firebase UI and Authentication SDK handle validation and error handling for free. Typically, this would require some additional logic and implementation time, so this is a big win and time saver. For example, if the user enters an invalid email address format, the Firebase UI will display a validation error to the user:
-
-![](.CS683ProjectReport_images/7b796e1d.png)
-
-The same applies for invalid passwords:
-
-![](.CS683ProjectReport_images/2276b9ae.png)
-
-### Iteration 2
-The requirement to view a map of food trucks was implemented in this iteration. The requirement to search for trucks was not completed; however, the app will search for trucks based on a predefined
-set of coordinates (currently those for Wichita, Kans: 37.6922, -97.3376). After the user authenticates, the app starts a map activity which implements Google's Map SDK. The activity then uses a 
-callback to make a HTTP request to Yelp's API when the map is ready to load. The response is then converted to an array and looped over, creating a map marker using the coordinates and the business name
-for a popup when the marker is clicked.
-
-View map of food trucks
-For this requirement, the app uses a HTTP request class and makes a GET request to Yelp's API in order to obtain business information for food trucks in the specified area.
-
-![image](https://user-images.githubusercontent.com/28734844/69204043-7c872980-0b0b-11ea-87af-2385a7847812.png)
-
+![image](https://user-images.githubusercontent.com/28734844/69930269-39707300-1488-11ea-907a-0ffaae3112bb.png)
+![image](https://user-images.githubusercontent.com/28734844/69930291-5b69f580-1488-11ea-85a0-6514040ccd26.png)
+![image](https://user-images.githubusercontent.com/28734844/69930311-789ec400-1488-11ea-93ca-22d493a907ac.png)
+![image](https://user-images.githubusercontent.com/28734844/69930325-8ce2c100-1488-11ea-8108-8a17480ba58d.png)
+![image](https://user-images.githubusercontent.com/28734844/69930355-aa178f80-1488-11ea-917a-3d697c1cbe60.png)
 
 
 ## Design and Implementation
@@ -204,179 +175,96 @@ For this requirement, the app uses a HTTP request class and makes a GET request 
 *(In Iteration 1-5, please describe Android components and features you have used in this iteration to implement the above requirements in your application. For each feature you used, provide a brief description and supporting evidences, such as sample code, log info, or screenshot(s) of execution results. Please specify mapped requirements and files in your project.)*
 
 ### Iteration 1
-Firebase was implemented following the SDK guides on Google. This included updated both the project and app-level gradle files, as well as including the google services JSON file in the project’s app directory. Most of this setup was completed simply by following the guides for Google Firebase. Also, because the project repo boilerplate included the google services plugins, I only needed to add the Firebase dependencies to my project’s gradle file:
+Firebase Realtime Database was implemented following the SDK guides on Google. This included updated both the app-level gradle file.
 
 
 ```
 dependencies { 
 …
-    // add the Firebase SDK for Google Analytics
-    implementation 'com.google.firebase:firebase-analytics:17.2.0'
-    // add SDKs for any other desired Firebase products
-    implementation 'com.google.firebase:firebase-auth:19.1.0'
-    implementation 'com.firebaseui:firebase-ui-auth:4.3.1'
+    implementation 'com.google.firebase:firebase-database:19.2.0'
 }
 ```
 
-I added some additional properties to my main activity to maintain state
-of the Firebase auth and user: 
-```
-private FirebaseAuth mAuth;
-private FirebaseUser currentUser;
-private static final int RC_SIGN_IN = 123;
-```
-
-I also updated the onCreate() and onStart() methods of the main activity to check for a signed in user, and update the UI accordingly using the methods described in the Firebase documentation:
+In order to store trucks in the database, I followed the Firebase docs and created a Java class to represent my Truck model in the database:
 
 ```
-@Override protected void onCreate(Bundle savedInstanceState) { 
-… 
-// Initialize Firebase Auth 
-mAuth = FirebaseAuth.getInstance(); 
+public class Truck {
+
+    public String name;
+    public String phone;
+    public String address;
+    public LatLng coordinates;
+    public String userId;
+
+    public Truck() {
+        // Default constructor required for calls to DataSnapshot.getValue(User.class)
+    }
+
+    public Truck(String name, String phone, String address, LatLng coordinates, String userId) {
+        this.name = name;
+        this.phone = phone;
+        this.address = address;
+        this.coordinates = coordinates;
+        this.userId = userId;
+    }
+
 }
 ```
-```
-@Override protected void onStart() { 
-… 
-// Check if user is signed in (non-null) and update UI accordingly. 
-currentUser = mAuth.getCurrentUser(); updateUI(currentUser); }
-```
+
+The add truck activity then uses these values to create a new instance of the Truck class and pass it to the Firebase API for storing the data:
 
 ```
-private void updateUI(@Nullable FirebaseUser user) {
-    if (user != null) {
+public void onAddTruck(View view) {
+    Log.d("ADD", "Adding food truck...");
+    String name = truckName.getText().toString();
+    String phone = truckPhone.getText().toString();
 
-        usernameTextView = findViewById(R.id.usernameTextViewId);
-        usernameTextView.setText(user.getDisplayName());
+    TacomotiveApplication app = (TacomotiveApplication) getApplication();
 
-    } else {
+    FirebaseUser user = app.getUser();
 
-        List<AuthUI.IdpConfig> providers = Arrays.asList(
-                new AuthUI.IdpConfig.EmailBuilder().build()
-        );
+    String userId = user.getUid();
 
-        // Create and launch sign-in intent
-        startActivityForResult(
-                AuthUI.getInstance()
-                        .createSignInIntentBuilder()
-                        .setAvailableProviders(providers)
-                        .build(),
-                RC_SIGN_IN
-        );
+    // Create new truck instance
+    Truck truck = new Truck(name, phone, address, coordinates, userId);
 
+    // Save truck to database
+    mDatabase = FirebaseDatabase.getInstance().getReference();
+    mDatabase.child("trucks").child(name).setValue(truck);
+
+    finish();
+}
+```
+
+I created a custom application class to make it easier to access my Firebase User object throughout the application, rather than having to pass it as a reference to each activity.
+
+```
+public class TacomotiveApplication extends Application {
+    FirebaseUser user;
+
+    ...
+
+    public void setUser(FirebaseUser user) {
+        this.user = user;
+    }
+
+    public FirebaseUser getUser() {
+        return user;
     }
 }
 ```
-
-### Iteration 2
-I implemented Google Maps SDK following the instructions on Google's website: [Maps SDK for Android](https://developers.google.com/maps/documentation/android-sdk/intro).
-In order to support the SDK, I added the google play services package to my app module's grade file:
-
-
-```
-dependencies { 
-…
-    implementation 'com.google.android.gms:play-services-maps:17.0.0'
-}
-```
-
-In order to make HTTP requests to Yelp's API, I used another library to help make async requests, which also required updating my 
-gradle file:
-
-```
-    // android async http
-    // source: https://loopj.com/android-async-http/
-    implementation 'com.loopj.android:android-async-http:1.4.9'
-
-```
-
-Following the instructions for the http package, I created a utility class `HttpUtils` which provides 
-the basic methods for making HTTP request:
-
-```
-import com.loopj.android.http.*;
-
-public class HttpUtils {
-    private static final String BASE_URL = "https://api.yelp.com/v3/";
-
-    private static AsyncHttpClient client = new AsyncHttpClient();
-
-    public static void get(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
-        client.get(getAbsoluteUrl(url), params, responseHandler);
-    }
-
-    private static String getAbsoluteUrl(String relativeUrl) {
-        return BASE_URL + relativeUrl;
-    }
-}
-```
-
-I then used this class in my map activity to make a GET request when the map was ready to load. 
-The method takes the response and creates a JSON object, which an array of food trucks can be looped over
-to obtain their coordinates, and then add markers to the map using these coordinates.:
-
-```
-    HttpUtils.get("businesses/search?term=tacos&latitude=37.6922&longitude=-97.3376", null, new JsonHttpResponseHandler() {
-        @Override
-        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-
-            // If the response is JSONObject instead of expected JSONArray
-            Log.d("trucks", "---------------- this is response : " + response);
-            try {
-                String truckResponse = response.toString();
-
-                // Adapted from: https://stackoverflow.com/questions/22687771/how-to-convert-jsonobjects-to-jsonarray
-                JSONObject truckObject = new JSONObject(truckResponse);
-                JSONArray truckArray = truckObject.getJSONArray("businesses");
-
-                for(int i=0; i<truckArray.length(); i++) {
-                    JSONObject truck = truckArray.getJSONObject(i);
-
-                    JSONObject coordinates = truck.getJSONObject("coordinates");
-
-                    String truckName = truck.getString("name");
-
-                    Double lat = coordinates.getDouble("latitude");
-                    Double lng = coordinates.getDouble("longitude");
-
-                    Log.d("truck", "latitude: " + lat + ", longitude: " + lng);
-
-                    // Add a marker in Sydney and move the camera
-                    LatLng marker = new LatLng(lat, lng);
-                    mMap.addMarker(new MarkerOptions().position(marker).title(truckName));
-                }
-            } catch (JSONException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void onSuccess(int statusCode, Header[] headers, JSONArray trucks) {
-            // Pull out the first event on the public timeline
-            Log.d("trucks", "Successfull request made...");
-        }
-    });
-```
-
 
 ## Project Structure
 *(In Iteration 1-5, please provide a screenshot of your project
 structure, and describe what files are modified, added or deleted since
 the previous iteration.)*
 
-### Iteration 1
+Since iteration 2, the MapsActivity class was updated to include a button for starting the add truck activity. A custom appplication class was created, and the `HttpUtils` class was refactored
+into a generic classes application to help clean up the project structure. I also removed the unused Main2Activity.
 
-![](.CS683ProjectReport_images/5456a7e8.png)
-![](.CS683ProjectReport_images/74656c88.png)
+The app level gradle file was updated to implement firebase realtime database.
 
-### Iteration 2
-
-Since iteration 1, the MainActivity class was updated to start the maps activity using an intent. The MapsActivity and HttpUtil classes were added.
-A layout file for the new map activity was added, and the main activity was updated. A new resource file was added to include the Google Maps API key.
-Both grade files were updated to include new packages.
-
-![image](https://user-images.githubusercontent.com/28734844/69204499-a1c86780-0b0c-11ea-85cf-3e325de8f30b.png)
+![image](https://user-images.githubusercontent.com/28734844/69930771-56a64100-148a-11ea-99be-b5a113ad09ca.png)
 
 
 ## References
@@ -400,6 +288,8 @@ Easily add sign-in to your Android app with FirebaseUI. (n.d.). Retrieved 11, 20
 How to convert JSONObjects to JSONArray?: https://stackoverflow.com/questions/22687771/how-to-convert-jsonobjects-to-jsonarray
 
 Maps SDK for Android: https://developers.google.com/maps/documentation/android-sdk/start
+
+[Understanding the Android Application Class](https://github.com/codepath/android_guides/wiki/Understanding-the-Android-Application-Class)
 
 What is User Acceptance Testing (UAT): A Complete Guide. (2019, August 21). Retrieved November 1, 2019 from Software Testing Help: https://www.softwaretestinghelp.com/what-is-user-acceptance-testing-uat/
 

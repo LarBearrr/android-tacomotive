@@ -95,6 +95,5 @@ public class AddTruckActivity extends AppCompatActivity {
         mDatabase.child("trucks").child(name).setValue(truck);
 
         finish();
-
     }
 }
