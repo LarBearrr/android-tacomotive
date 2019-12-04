@@ -19,8 +19,6 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import org.json.*;
-
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.net.PlacesClient;
@@ -30,24 +28,13 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.loopj.android.http.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-
-import cz.msebera.android.httpclient.Header;
-import edu.bu.metcs.tacomotive.classes.HttpUtils;
-import edu.bu.metcs.tacomotive.models.Truck;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
-    private GeoFire geoFire;
     private GoogleMap mMap;
-
-//    public List<String> pins;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,52 +109,61 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng center = new LatLng(37.6922, -97.3376);
 
         mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
-        mMap.setMinZoomPreference(7);
+        mMap.setMinZoomPreference(12);
 
         onSearchMap(center);
     }
 
-    public void onSearchMap(LatLng latLng) {
+    public void onSearchMap(final LatLng latLng) {
 
         Double lat = latLng.latitude;
         Double lng = latLng.longitude;
 
+        // Source: https://github.com/firebase/geofire-android
         DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference("pins");
         GeoFire geoFire = new GeoFire(mDatabase);
 
-        // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
+        // creates a new query around the users location with a radius of 1 km
         GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(lat, lng), 10);
 
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
-
-            List<LatLng> pins;
 
             @Override
             public void onKeyEntered(String key, GeoLocation location) {
                 System.out.println(String.format("Key %s entered the search area at [%f,%f]", key, location.latitude, location.longitude));
 
-//                DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference("trucks");
-//
-//                mDatabase.addValueEventListener(new ValueEventListener() {
-//                    @Override
-//                    public void onDataChange(DataSnapshot dataSnapshot) {
-//
-//                        dataSnapshot.child(key).child("name").getVaue();
-//                        for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-//                            Log.e("TRUCK", "======="+postSnapshot.child("name").getValue());
-//                            Log.e("TRUCK", "======="+postSnapshot.child("address").getValue());
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void onCancelled(DatabaseError error) {
-//                        // Failed to read value
-//                        Log.e("TRUCK", "Failed to read truck name value.", error.toException());
-//                    }
-//                });
+                // Create a new references to the trucks database
+                DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference("trucks");
 
-                LatLng marker = new LatLng(location.latitude, location.longitude);
-                mMap.addMarker(new MarkerOptions().position(marker).title(key));
+                // Retrieve an individual truck
+                // Source: https://stackoverflow.com/a/30564863
+                mDatabase.child(key).addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+
+                        // Get values for the truck
+                        String name = snapshot.child("name").getValue().toString();
+                        String address = snapshot.child("address").getValue().toString();
+                        String phone = snapshot.child("phone").getValue().toString();
+
+                        // Parse the trucks coordinates
+                        String latitude = snapshot.child("coordinates").child("latitude").getValue().toString();
+                        String longitude = snapshot.child("coordinates").child("longitude").getValue().toString();
+
+                        Double lat = Double.valueOf(latitude);
+                        Double lng = Double.valueOf(longitude);
+
+                        // Add a marker to the map
+                        LatLng marker = new LatLng(lat, lng);
+                        mMap.addMarker(new MarkerOptions().position(marker).title(name).snippet(address + "\r\n" + phone));
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
+                });
+
+
             }
 
             @Override
