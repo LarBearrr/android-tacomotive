@@ -7,6 +7,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import com.firebase.geofire.GeoFire;
+import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQuery;
+import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -22,16 +26,28 @@ import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.loopj.android.http.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
 import edu.bu.metcs.tacomotive.classes.HttpUtils;
+import edu.bu.metcs.tacomotive.models.Truck;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
+    private GeoFire geoFire;
     private GoogleMap mMap;
+
+//    public List<String> pins;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,59 +122,72 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng center = new LatLng(37.6922, -97.3376);
 
         mMap.animateCamera(CameraUpdateFactory.newLatLng(center));
-        mMap.setMinZoomPreference(12);
+        mMap.setMinZoomPreference(7);
 
         onSearchMap(center);
     }
 
     public void onSearchMap(LatLng latLng) {
 
-        String lat = String.valueOf(latLng.latitude);
-        String lng = String.valueOf(latLng.longitude);
+        Double lat = latLng.latitude;
+        Double lng = latLng.longitude;
 
-        /**
-         * Async HTTP Request
-         * Source: https://loopj.com/android-async-http/
-         */
-        HttpUtils.get("businesses/search?term=tacos&latitude=" + lat + "&longitude=" + lng, null, new JsonHttpResponseHandler() {
+        DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference("pins");
+        GeoFire geoFire = new GeoFire(mDatabase);
+
+        // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
+        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(lat, lng), 10);
+
+        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+
+            List<LatLng> pins;
+
             @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+            public void onKeyEntered(String key, GeoLocation location) {
+                System.out.println(String.format("Key %s entered the search area at [%f,%f]", key, location.latitude, location.longitude));
 
-                // If the response is JSONObject instead of expected JSONArray
-                Log.d("trucks", "---------------- this is response : " + response);
-                try {
-                    String truckResponse = response.toString();
+//                DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference("trucks");
+//
+//                mDatabase.addValueEventListener(new ValueEventListener() {
+//                    @Override
+//                    public void onDataChange(DataSnapshot dataSnapshot) {
+//
+//                        dataSnapshot.child(key).child("name").getVaue();
+//                        for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+//                            Log.e("TRUCK", "======="+postSnapshot.child("name").getValue());
+//                            Log.e("TRUCK", "======="+postSnapshot.child("address").getValue());
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(DatabaseError error) {
+//                        // Failed to read value
+//                        Log.e("TRUCK", "Failed to read truck name value.", error.toException());
+//                    }
+//                });
 
-                    // Adapted from: https://stackoverflow.com/questions/22687771/how-to-convert-jsonobjects-to-jsonarray
-                    JSONObject truckObject = new JSONObject(truckResponse);
-                    JSONArray truckArray = truckObject.getJSONArray("businesses");
-
-                    for(int i=0; i<truckArray.length(); i++) {
-                        JSONObject truck = truckArray.getJSONObject(i);
-
-                        JSONObject coordinates = truck.getJSONObject("coordinates");
-
-                        String truckName = truck.getString("name");
-
-                        Double truckLat = coordinates.getDouble("latitude");
-                        Double truckLng = coordinates.getDouble("longitude");
-
-                        Log.d("truck", "latitude: " + truckLat + ", longitude: " + truckLng);
-
-                        // Add a marker
-                        LatLng marker = new LatLng(truckLat, truckLng);
-                        mMap.addMarker(new MarkerOptions().position(marker).title(truckName));
-                    }
-                } catch (JSONException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+                LatLng marker = new LatLng(location.latitude, location.longitude);
+                mMap.addMarker(new MarkerOptions().position(marker).title(key));
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONArray trucks) {
-                // Pull out the first truck from the response
-                Log.d("trucks", "Successfull request made...");
+            public void onKeyExited(String key) {
+                System.out.println(String.format("Key %s is no longer in the search area", key));
+            }
+
+            @Override
+            public void onKeyMoved(String key, GeoLocation location) {
+                System.out.println(String.format("Key %s moved within the search area to [%f,%f]", key, location.latitude, location.longitude));
+            }
+
+            @Override
+            public void onGeoQueryReady() {
+                System.out.println("All initial data has been loaded and events have been fired!");
+            }
+
+            @Override
+            public void onGeoQueryError(DatabaseError error) {
+                System.err.println("There was an error with this query: " + error);
             }
         });
     }

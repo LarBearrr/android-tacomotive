@@ -30,6 +30,7 @@ dependencies {
 
     // add the Firebase SDK for Google Analytics
     implementation 'com.google.firebase:firebase-analytics:17.2.0'
+
     // add SDKs for any other desired Firebase products
     implementation 'com.google.firebase:firebase-auth:19.1.0'
     implementation 'com.firebaseui:firebase-ui-auth:4.3.1'
@@ -40,6 +41,9 @@ dependencies {
     // android async http
     // source: https://loopj.com/android-async-http/
     implementation 'com.loopj.android:android-async-http:1.4.9'
+
+    // add GeoFire for searching locations
+    implementation 'com.firebase:geofire-android:3.0.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

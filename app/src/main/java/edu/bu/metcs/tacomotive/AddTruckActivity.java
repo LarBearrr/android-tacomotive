@@ -7,6 +7,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
+import com.firebase.geofire.GeoFire;
+import com.firebase.geofire.GeoLocation;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.libraries.places.api.Places;
@@ -24,8 +26,6 @@ import edu.bu.metcs.tacomotive.app.TacomotiveApplication;
 import edu.bu.metcs.tacomotive.models.Truck;
 
 public class AddTruckActivity extends AppCompatActivity {
-
-    private DatabaseReference mDatabase;
 
     EditText truckName, truckPhone;
     String address;
@@ -78,21 +78,23 @@ public class AddTruckActivity extends AppCompatActivity {
 
     public void onAddTruck(View view) {
         Log.d("ADD", "Adding food truck...");
+
+        // Get the name and phone of the truck
         String name = truckName.getText().toString();
         String phone = truckPhone.getText().toString();
 
+        // Init our custom app class
         TacomotiveApplication app = (TacomotiveApplication) getApplication();
 
+        // Get the current user id
         FirebaseUser user = app.getUser();
-
         String userId = user.getUid();
 
-        // Create new truck instance
+        // Create new truck model
         Truck truck = new Truck(name, phone, address, coordinates, userId);
 
         // Save truck to database
-        mDatabase = FirebaseDatabase.getInstance().getReference();
-        mDatabase.child("trucks").child(name).setValue(truck);
+        truck.save();
 
         finish();
     }
