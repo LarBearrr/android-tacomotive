@@ -121,9 +121,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onInfoWindowClick(Marker marker) {
-        Toast.makeText(this, "Truck added to favorites",
-                Toast.LENGTH_SHORT).show();
 
+        Intent intent = new Intent(this, TruckDetailsActivity.class);
+        intent.putExtra("truckId", marker.getTag().toString());
+        startActivity(intent);
 
     }
 
@@ -168,7 +169,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         // Add a marker to the map
                         LatLng marker = new LatLng(lat, lng);
-                        mMap.addMarker(new MarkerOptions().position(marker).title(name).snippet(address + "\r\n" + phone));
+                        Marker truckMarker = mMap.addMarker(new MarkerOptions().position(marker).title(name).snippet(address + "\r\n" + phone));
+                        truckMarker.setTag(snapshot.getKey());
                     }
 
                     @Override

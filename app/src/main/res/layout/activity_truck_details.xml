@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".TruckDetailsActivity">
+
+    <TextView
+        android:id="@+id/truckNameTextView"
+        android:layout_width="match_parent"
+        android:layout_height="34dp"
+        android:text="TextView" />
+
+    <TextView
+        android:id="@+id/truckAddressTextView"
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:text="TextView" />
+
+    <TextView
+        android:id="@+id/truckPhoneTextView"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:text="TextView" />
+
+    <Switch
+        android:id="@+id/isFavoriteSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="41dp"
+        android:text="Favorite" />
+</LinearLayout>
