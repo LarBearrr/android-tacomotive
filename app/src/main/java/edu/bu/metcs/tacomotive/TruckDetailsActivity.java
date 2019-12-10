@@ -114,10 +114,7 @@ public class TruckDetailsActivity extends AppCompatActivity {
         DatabaseReference mDatabase;
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
-        // Create new post at /user-posts/$userid/$postid and at
-        // /posts/$postid simultaneously
-        String key = mDatabase.child("posts").push().getKey();
-
+        // Create new favorite at /user-favorites/$userid/$truckId
         Map<String, Object> childUpdates = new HashMap<>();
 
         childUpdates.put("/user-favorites/" + user.getUid() + "/" + truckId, true);
