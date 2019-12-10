@@ -28,7 +28,6 @@ import edu.bu.metcs.tacomotive.app.TacomotiveApplication;
 
 public class TruckDetailsActivity extends AppCompatActivity {
 
-
     FirebaseUser user;
 
     String truckId;
