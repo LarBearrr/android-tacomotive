@@ -157,147 +157,116 @@ location information is based on social media streams.
 
 *(In Iteration 1-5, for each requirement you have worked on in this iteration, please give a detailed description, completion status (completed, or partially completed) and show the testing results if completed or partially completed, such as screenshots of the application screens or log info.) Please also specify if this requirement is a new requirement or a requirement you had started in previous iterations. Please also specify what device do you use for testing )*
 
-I spent this iteration finishing the Firestore Realtime Database implemention. I refactored requirement #2, Search for food trucks, so that it queries the database in realtime, rather than
-pulling results from Yelps API. I did this by implementing a 3rd party package called GeoFire. I also added the address and phone number to the info window that opens when a map marker is clicked, which satisfies requirement #7, View food truck details.
+For the final iteration, I spent time cleaning up the application’s code base, removing unused imports, and implementing some missing functionality. Specifically, an activity was created to show the truck’s complete details. I moved the favorite feature to this activity by adding a switch which uses an event listener to push the truck to a new real time database reference. Some time was spent researching the best way to structure the data as well.
 
-I also started working on requirement #2, Add food truck to favorites. When an info window is clicked, a toast pops up indicating the food truck was added to the users favorites. The logic is not implemented.
+View food truck details
+This requirement was implemented using a new activity which displays the truck name, address, and phone number. There is also a switch which indicates if the truck has been added to the user’s favorites. The switch will make a request to the realtime database and either add to the user’s favorites if not already favorited, or remove if it has been.
 
-Because the realtime database is being used to retrieve trucks, trucks will show up on the map immediately after being added.
+Add truck to favorites
+In order to support this requirement, I had to create a new structure for the realtime database. A switch was added to the truck details activity which uses an event handler to push data to the database. The app creates a toast message indicating what action the user took as well.
 
-![image](https://user-images.githubusercontent.com/28734844/70115094-44600a80-1624-11ea-9800-9693432e31aa.png)
-![image](https://user-images.githubusercontent.com/28734844/70115116-55a91700-1624-11ea-8785-6a5887b51f7f.png)
-![image](https://user-images.githubusercontent.com/28734844/70115153-7a04f380-1624-11ea-94a8-a1bdd41ff3a4.png)
-![image](https://user-images.githubusercontent.com/28734844/70115196-986aef00-1624-11ea-9107-91dbbf8449e3.png)
-![image](https://user-images.githubusercontent.com/28734844/70115225-ad478280-1624-11ea-977c-778e71449792.png)
 
 ## Design and Implementation
 
 *(In Iteration 1-5, please describe Android components and features you have used in this iteration to implement the above requirements in your application. For each feature you used, provide a brief description and supporting evidences, such as sample code, log info, or screenshot(s) of execution results. Please specify mapped requirements and files in your project.)*
 
-### Iteration 1
-A 3rd party package, GeoFire, was added to my project to help query trucks near the users location. This included updated both the app-level gradle file.
-
+The first thing I did in this iteration was create a new activity called TruckDetailsActivity. It is responsible for displaying the truck name, address, phone number, and favorite status.
 
 ```
-dependencies { 
-…
-    implementation 'com.firebase:geofire-android:3.0.0'
+public class TruckDetailsActivity extends AppCompatActivity {
+   FirebaseUser user;
+   String truckId;
+   TextView truckName, truckAddress, truckPhone;
+   Switch isFavoriteSwitch;
+   @Override
+   protected void onCreate(Bundle savedInstanceState) {
+       super.onCreate(savedInstanceState);
+       setContentView(R.layout.activity_truck_details);
+       TacomotiveApplication app = (TacomotiveApplication) getApplication();
+       // Set the current user id
+       user = app.getUser();
+       truckId = getIntent().getStringExtra("truckId");
+       truckName = findViewById(R.id.truckNameTextView);
+       truckAddress = findViewById(R.id.truckAddressTextView);
+       truckPhone = findViewById(R.id.truckPhoneTextView);
+       isFavoriteSwitch = (Switch) findViewById(R.id.isFavoriteSwitch);
+       setTruck(truckId);
+       // Set a checked change listener for switch button
+       isFavoriteSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+           @Override
+           public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+               if (isChecked) {
+                   setFavorite();
+               }
+               else {
+                   unsetFavorite();
+               }
+           }
+       });
+   }
+   private void setTruck(String truckId) {
+       // Create a new references to the trucks database
+       DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference();
+       // Retrieve an individual truck
+       // Source: https://stackoverflow.com/a/30564863
+       mDatabase.child("trucks").child(truckId).addValueEventListener(new ValueEventListener() {
+           @Override
+           public void onDataChange(DataSnapshot snapshot) {
+
+               // Get values for the truck
+               String name = snapshot.child("name").getValue().toString();
+               String address = snapshot.child("address").getValue().toString();
+               String phone = snapshot.child("phone").getValue().toString();
+               truckName.setText(name);
+               truckAddress.setText(address);
+               truckPhone.setText(phone);
+           }
+           @Override
+           public void onCancelled(DatabaseError databaseError) {
+           }
+       });
+       mDatabase.child("user-favorites").child(user.getUid()).child(truckId).addValueEventListener(new ValueEventListener() {
+           @Override
+           public void onDataChange(DataSnapshot snapshot) {
+               if (snapshot.exists()) {
+                   Boolean isFavorite = Boolean.parseBoolean(snapshot.getValue().toString());
+                   isFavoriteSwitch.setChecked(isFavorite);
+               }
+           }
+           @Override
+           public void onCancelled(DatabaseError databaseError) {
+           }
+       });
+   }
+   private void setFavorite() {
+       DatabaseReference mDatabase;
+       mDatabase = FirebaseDatabase.getInstance().getReference();
+       // Create new favorite at /user-favorites/$userid/$truckId
+       Map<String, Object> childUpdates = new HashMap<>();
+       childUpdates.put("/user-favorites/" + user.getUid() + "/" + truckId, true);
+       mDatabase.updateChildren(childUpdates);
+       // Show the switch button checked status as toast message
+       Toast.makeText(TruckDetailsActivity.this, "Truck added to favorites!", Toast.LENGTH_SHORT).show();
+   }
+   private void unsetFavorite()
+   {
+       DatabaseReference mDatabase;
+       mDatabase = FirebaseDatabase.getInstance().getReference("user-favorites");
+       mDatabase.child(user.getUid()).child(truckId).removeValue();
+       // Show the switch button checked status as toast message
+       Toast.makeText(TruckDetailsActivity.this,
+               "Truck removed from favorites!", Toast.LENGTH_LONG).show();
+   }
 }
 ```
 
-Since the Yelp API is no longer being used, I removed the generic `classes` package, including the `HttpUtils` class.
-
-I also updated my `Truck` model to help work with the Firestore database. This included implementating a `save()` method to add the truck to the database, and a helper method `setPin()` to create
-a GeoFire reference in the database.
-
-
+I then updated my map activity to create an intent using the new truck details activity which is triggered when the info window is tapped:
 ```
-public class Truck {
-    ...
-    public void save() {
-        mDatabase = FirebaseDatabase.getInstance().getReference(path);
-
-        String key = mDatabase.push().getKey();
-
-        Map<String, Object> childUpdates = new HashMap<>();
-        childUpdates.put(key, this);
-
-        mDatabase.updateChildren(childUpdates);
-
-        setPin(key, coordinates);
-    }
-
-    private void setPin(String key, LatLng coordinates) {
-
-        mDatabase = FirebaseDatabase.getInstance().getReference("pins");
-        GeoFire geoFire = new GeoFire(mDatabase);
-
-        geoFire.setLocation(key, new GeoLocation(coordinates.latitude, coordinates.longitude));
-    }
-}
-```
-
-The add truck activity was refactored to use the new methods on the Truck model:
-
-```
-public void onAddTruck(View view) {
-    Log.d("ADD", "Adding food truck...");
-    String name = truckName.getText().toString();
-    String phone = truckPhone.getText().toString();
-
-    TacomotiveApplication app = (TacomotiveApplication) getApplication();
-
-    FirebaseUser user = app.getUser();
-
-    String userId = user.getUid();
-
-    // Create new truck model
-    Truck truck = new Truck(name, phone, address, coordinates, userId);
-
-    // Save truck to database
-                     truck.save();
-
-    finish();
-}
-```
-
-Finally, the MapsActivity was updated to use the GeoFire package:
-
-```
-public void onSearchMap(final LatLng latLng) {
-
-    ...
-
-    // Source: https://github.com/firebase/geofire-android
-    DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference("pins");
-    GeoFire geoFire = new GeoFire(mDatabase);
-
-    // creates a new query around the users location with a radius of 1 km
-    GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(lat, lng), 10);
-
-    geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
-
-        @Override
-        public void onKeyEntered(String key, GeoLocation location) {
-            System.out.println(String.format("Key %s entered the search area at [%f,%f]", key, location.latitude, location.longitude));
-
-            // Create a new references to the trucks database
-            DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference("trucks");
-
-            // Retrieve an individual truck
-            // Source: https://stackoverflow.com/a/30564863
-            mDatabase.child(key).addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-
-                    // Get values for the truck
-                    String name = snapshot.child("name").getValue().toString();
-                    String address = snapshot.child("address").getValue().toString();
-                    String phone = snapshot.child("phone").getValue().toString();
-
-                    // Parse the trucks coordinates
-                    String latitude = snapshot.child("coordinates").child("latitude").getValue().toString();
-                    String longitude = snapshot.child("coordinates").child("longitude").getValue().toString();
-
-                    Double lat = Double.valueOf(latitude);
-                    Double lng = Double.valueOf(longitude);
-
-                    // Add a marker to the map
-                    LatLng marker = new LatLng(lat, lng);
-                    mMap.addMarker(new MarkerOptions().position(marker).title(name).snippet(address + "\r\n" + phone));
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                }
-            });
-
-
-        }
-
-        ...
-
-    });
+`@Override
+public void onInfoWindowClick(Marker marker) {
+   Intent intent = new Intent(this, TruckDetailsActivity.class);
+   intent.putExtra("truckId", marker.getTag().toString());
+   startActivity(intent);
 }
 ```
 
@@ -306,11 +275,9 @@ public void onSearchMap(final LatLng latLng) {
 structure, and describe what files are modified, added or deleted since
 the previous iteration.)*
 
-The project structure has not changed much, aside from removing the classes package and HttpUtils class.
+The only change to the project structure has been the addition of the TruckDetailsActivity.
 
-The app level gradle file was updated to implement the GeoFire package.
-
-![image](https://user-images.githubusercontent.com/28734844/70115542-a79e6c80-1625-11ea-9151-9f5e73f4eced.png)
+![image](https://user-images.githubusercontent.com/28734844/70497383-90a1c380-1ad8-11ea-917e-d30a78371e97.png)
 
 
 
@@ -318,33 +285,23 @@ The app level gradle file was updated to implement the GeoFire package.
 
 *(Please list all your references here)*
 
-(n.d.). From Street Food App: https://www.streetfoodapp.com
-
-(n.d.). From Wichita Food Trucks: https:/www.wichitafoodtrucks.com
-
-[Android Firebase, simply get one child object's data](https://stackoverflow.com/questions/30564735/android-firebase-simply-get-one-child-objects-data)
-
-Barker, L. (2019). Tacomotive. From Tacomotive: https://tacomotive.herokuapp.com
-
-Barker, L. (2019). Tacomotive Database Project.
-
-Calling REST APIs for Android: https://stackoverflow.com/questions/29339565/calling-rest-api-from-an-android-app
-
-Definition of 'Acceptance Testing'. (n.d.). Retrieved 11 1, 2019 from The Economic Times: https://economictimes.indiatimes.com/definition/acceptance-testing
-
-Easily add sign-in to your Android app with FirebaseUI. (n.d.). Retrieved 11, 2019 from Google Firebase: https://firebase.google.com/docs/auth/android/firebaseui
-
-How to convert JSONObjects to JSONArray?: https://stackoverflow.com/questions/22687771/how-to-convert-jsonobjects-to-jsonarray
-
-[Info windows](https://developers.google.com/maps/documentation/android-sdk/infowindows)
-
-[Location Queries With Firebase GeoFire and Angular Google Maps (AGM)](https://angularfirebase.com/lessons/geofire-location-queries-with-google-maps/)
-
-Maps SDK for Android: https://developers.google.com/maps/documentation/android-sdk/start
-
-[Understanding the Android Application Class](https://github.com/codepath/android_guides/wiki/Understanding-the-Android-Application-Class)
-
-What is User Acceptance Testing (UAT): A Complete Guide. (2019, August 21). Retrieved November 1, 2019 from Software Testing Help: https://www.softwaretestinghelp.com/what-is-user-acceptance-testing-uat/
-
+- [Online] // Street Food App. - https://www.streetfoodapp.com.
+- [Online] // Wichita Food Trucks. - https:/www.wichitafoodtrucks.com.
+- Android Firebase, simply get one child object's data
+- Calling REST APIs for Android [Online] // Stackoverflow. - https://stackoverflow.com/questions/29339565/calling-rest-api-from-an-android-app.
+- Definition of 'Acceptance Testing' [Online] // The Economic Times. - 1 11 2019. - https://economictimes.indiatimes.com/definition/acceptance-testing.
+- Easily add sign-in to your Android app with FirebaseUI [Online] // Google Firebase. - 11 2019. - https://firebase.google.com/docs/auth/android/firebaseui.
+- Firebase >> User Favorites List https://stackoverflow.com/questions/48068089/firebase-user-favorites-list
+- How to add listener for Switch button in Android https://android--code.blogspot.com/2015/08/android-switch-button-listener.html
+- How to convert JSONObjects to JSONArray? [Online] // Stackoverflow. - https://stackoverflow.com/questions/22687771/how-to-convert-jsonobjects-to-jsonarray.
+- How to delete from firebase realtime database? https://stackoverflow.com/questions/37390864/how-to-delete-from-firebase-realtime-database
+- How to set tag to Google Map's marker in Android? https://stackoverflow.com/questions/35197237/how-to-set-tag-to-google-maps-marker-in-android
+- Info windows
+- Location Queries With Firebase GeoFire and Angular Google Maps (AGM)
+- Maps SDK for Android [Online] // Google. - https://developers.google.com/maps/documentation/android-sdk/start.
+- Tacomotive [Online] / auth. Barker Larry // Tacomotive. - 2019. - https://tacomotive.herokuapp.com.
+- Tacomotive Database Project [Report] / auth. Barker Larry. - 2019.
+- Understanding the Android Application Class https://github.com/codepath/android_guides/wiki/Understanding-the-Android-Application-Class
+- What is User Acceptance Testing (UAT): A Complete Guide [Online] // Software Testing Help. - 21 August 2019. - 1 November 2019. - https://www.softwaretestinghelp.com/what-is-user-acceptance-testing-uat/.
 
 
